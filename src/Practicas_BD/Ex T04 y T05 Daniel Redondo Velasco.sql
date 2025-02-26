@@ -1,0 +1,77 @@
+--EJERCICIO1
+CREATE TABLE PROYECTOS(
+  cod_proyecto NUMBER(5) CONSTRAINT proyectos_pk PRIMARY KEY,
+  nombre VARCHAR2(30) CONSTRAINT proyectos_nn1 NOT NULL ,
+  tiempo_previsto INTERVAL YEAR TO MONTH,
+  fecha_inicio DATE
+);
+CREATE TABLE TAREAS(
+  cod_proyecto NUMBER(5) CONSTRAINT tareas_fk1 REFERENCES PROYECTOS(cod_proyecto) ON DELETE CASCADE,
+  cod_tarea NUMBER(3),
+  descripcion VARCHAR2(50) CONSTRAINT tareas_nn1 NOT NULL,
+                   CONSTRAINT tareas_pk PRIMARY KEY (cod_proyecto, cod_tarea)
+);
+CREATE TABLE PERSONAL(
+  cod_pers NUMBER(6) CONSTRAINT personal_pk PRIMARY KEY ,
+  nombre VARCHAR2(30) CONSTRAINT personal_nn1 NOT NULL
+);
+CREATE TABLE EJECUCIONES(
+    cod_proyecto NUMBER(5),
+    cod_tarea NUMBER(3),
+    cod_pers NUMBER(6) CONSTRAINT ejecuciones_fk2 REFERENCES PERSONAL(cod_pers) ON DELETE CASCADE,
+    tiempo INTERVAL DAY TO SECOND DEFAULT '0 2:00:00',
+    fecha_inicio DATE DEFAULT TO_DATE('31/10/2024', 'dd/mm/yyyy'),
+                                    CONSTRAINT ejecuciones_pk PRIMARY KEY (cod_proyecto,cod_tarea,cod_pers),
+                                    CONSTRAINT ejecuciones_fk1 FOREIGN KEY (cod_proyecto, cod_tarea) REFERENCES TAREAS (cod_proyecto, cod_tarea)
+);
+--EJERCICIO2
+ALTER TABLE TAREAS MODIFY(descripcion VARCHAR2(75));
+ALTER TABLE PROYECTOS ADD CHECK ( FECHA_INICIO > TO_DATE('20/3/2023', 'dd/mm/yyyy' ));
+ALTER TABLE EJECUCIONES DROP CONSTRAINT ejecuciones_pk;
+ALTER TABLE EJECUCIONES ADD id_ejecucion NUMBER(7) CONSTRAINT ejecuciones_pk PRIMARY KEY;
+--EJERCICIO3
+INSERT INTO PROYECTOS (cod_proyecto, nombre, tiempo_previsto, fecha_inicio)
+VALUES (1, 'Instalación de red local', '0-1', TO_DATE('26/12/2023','dd/mm/yyyy'));
+INSERT INTO PROYECTOS (cod_proyecto, nombre, tiempo_previsto, fecha_inicio)
+VALUES (2, 'Aumentar seguridad', '0-2', TO_DATE('24/1/2024','dd/mm/yyyy'));
+INSERT INTO PROYECTOS (cod_proyecto, nombre, tiempo_previsto, fecha_inicio)
+VALUES (3, 'Construcción nave industrial', '1-6', TO_DATE('15/2/2024','dd/mm/yyyy'));
+INSERT INTO TAREAS (cod_proyecto, COD_TAREA, DESCRIPCION)
+VALUES (1, 1, 'Cableado de la red');
+INSERT INTO TAREAS (cod_proyecto, COD_TAREA, DESCRIPCION)
+VALUES (1, 2, 'Instalación de switches');
+INSERT INTO TAREAS (cod_proyecto, COD_TAREA, DESCRIPCION)
+VALUES (2, 1, 'Seguridad perimetral');
+INSERT INTO PERSONAL (cod_pers, nombre)
+VALUES (1, 'Antonio');
+INSERT INTO PERSONAL (cod_pers, nombre)
+VALUES (2, 'Andrea');
+INSERT INTO PERSONAL (cod_pers, nombre)
+VALUES (3, 'Marta');
+INSERT INTO EJECUCIONES (ID_EJECUCION, COD_PROYECTO, COD_TAREA, COD_PERS, FECHA_INICIO)
+VALUES (1, 1, 1, 1, TO_DATE('26/1/2024','dd/mm/yyyy'));
+INSERT INTO EJECUCIONES (ID_EJECUCION, COD_PROYECTO, COD_TAREA, COD_PERS, FECHA_INICIO)
+VALUES (2, 1, 1, 2,TO_DATE('27/1/2024','dd/mm/yyyy'));
+INSERT INTO EJECUCIONES (ID_EJECUCION, COD_PROYECTO, COD_TAREA, COD_PERS, FECHA_INICIO)
+VALUES (3, 1, 2, 3, TO_DATE('30/1/2024','dd/mm/yyyy'));
+INSERT INTO EJECUCIONES (ID_EJECUCION, COD_PROYECTO, COD_TAREA, COD_PERS, FECHA_INICIO)
+VALUES (4, 2, 1, 2,TO_DATE('24/1/2024','dd/mm/yyyy'));
+INSERT INTO EJECUCIONES (ID_EJECUCION, COD_PROYECTO, COD_TAREA, COD_PERS, FECHA_INICIO)
+VALUES (5, 2, 1, 1,TO_DATE('28/1/2024','dd/mm/yyyy'));
+--EJERCICIO4
+COMMIT;
+--EJERCICIO5
+UPDATE EJECUCIONES SET FECHA_INICIO=FECHA_INICIO+1 WHERE COD_PROYECTO = 2;
+DELETE FROM EJECUCIONES WHERE cod_proyecto=1;
+DELETE FROM EJECUCIONES WHERE cod_proyecto=2;
+DELETE FROM EJECUCIONES WHERE cod_proyecto=3;
+--EJERCICIO6
+UPDATE PERSONAL SET NOMBRE='Mara' WHERE NOMBRE='Marta';
+--EJERCICIO7
+DELETE TAREAS WHERE cod_proyecto=1 AND COD_TAREA=3;
+--EJERCICIO8
+ROLLBACK;
+--EJERCICIO9
+UPDATE PROYECTOS SET TIEMPO_PREVISTO='1-3' WHERE COD_PROYECTO = 2;
+--EJERCICIO10
+UPDATE EJECUCIONES SET COD_PERS = 3 WHERE COD_PERS=2 AND COD_PROYECTO=1;

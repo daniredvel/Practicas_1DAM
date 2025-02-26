@@ -1,0 +1,150 @@
+--EJERCICIO1
+--Crea una vista donde aparezcan el puesto, los contratos actuales de ese puesto
+--(sin fecha de fin) y los contratos anteriores.
+--Añadiendo 'contratos actuales' y 'contratos anteriores' para indicar cada uno
+
+--Este ejercicio no se si lo podia de esta forma o los contatos en la misma columna
+--Para ponerlo en una columna con un case
+CREATE OR REPLACE VIEW v_trabajadores_por_puesto AS
+SELECT TITULO_PUESTO, COUNT(*) || 'contratos_actuales'
+    , COUNT(DISTINCT TITULO_PUESTO) || 'contratos_antiguos'
+FROM PUESTOS p
+JOIN CONTRATOS c USING(COD_PUESTO)
+WHERE C.FECHA_FIN IS NULL
+GROUP BY TITULO_PUESTO
+ORDER BY TITULO_PUESTO;
+
+
+--EJERCICIO2
+--Indica nombre y apellidos de los jefes que tengan al menos 2 trabajadores
+--más que 'Mark Holmes'
+
+--EMPLEADOS DE MARK HOLMES
+CREATE OR REPLACE VIEW EMPLEADOS_MARK_HOLMES AS
+SELECT COUNT(*) N_EMPLEADOS, COD_JEFE
+FROM EMPLEADOS E
+WHERE COD_JEFE = (
+    SELECT W.COD_EMP
+    FROM EMPLEADOS W
+    WHERE UPPER(W.NOMBRE)='MARK' AND UPPER(W.APELLIDO1)='HOLMES'
+    )
+GROUP BY COD_JEFE;
+
+--EMPLEADOS POR JEFE (AGRUPADOS POR JEFE)
+CREATE VIEW V_EMPLEADOS_POR_JEFE AS
+SELECT COD_JEFE, COUNT(*) N_EMPLEADOS
+FROM EMPLEADOS
+GROUP BY COD_JEFE;
+
+SELECT NOMBRE, APELLIDO1, APELLIDO2
+FROM EMPLEADOS E
+JOIN V_EMPLEADOS_POR_JEFE V ON E.COD_EMP=V.COD_JEFE
+WHERE COD_EMP IN (SELECT COD_JEFE FROM V_EMPLEADOS_POR_JEFE
+WHERE N_EMPLEADOS>=(SELECT N_EMPLEADOS
+                   FROM EMPLEADOS_MARK_HOLMES)+2)
+ORDER BY N_EMPLEADOS, APELLIDO1, APELLIDO2;
+
+
+
+
+
+
+
+--EJERCICIO3
+--Muestra los empleados que cobren más de 100.000, el segundo subselect no se de que es
+--El segundo select puede ser que no sean jefes de departamento, pero no estoy seguro
+
+SELECT NOMBRE, APELLIDO1, APELLIDO2, SALARIO, COD_DEP, TITULO_PUESTO
+FROM EMPLEADOS e
+JOIN CONTRATOS c USING (COD_EMP)
+JOIN PUESTOS p USING(COD_PUESTO)
+WHERE C.FECHA_FIN IS NULL
+    AND SALARIO>100000
+    AND COD_EMP NOT IN(
+        SELECT COD_EMP
+        FROM CONTRATOS W
+        HAVING COUNT(W.COD_EMP)=1
+        GROUP BY W.COD_EMP
+    );
+
+--EJERCICIO4
+--Muestra los trabajadores que trabajan para el departamento de ventas y el de desarrollo
+SELECT COD_EMP, NOMBRE, APELLIDO1, APELLIDO2
+FROM EMPLEADOS E
+WHERE COD_EMP IN (SELECT
+                      COD_EMP
+                  FROM CONTRATOS
+                  JOIN DEPARTAMENTOS d USING (COD_DEP)
+                  WHERE UPPER(d.NOMBRE_DEP) = 'VENTAS') AND
+    COD_EMP IN (SELECT
+                      COD_EMP
+                  FROM CONTRATOS
+                  JOIN DEPARTAMENTOS d USING (COD_DEP)
+                  WHERE UPPER(d.NOMBRE_DEP) = 'DESARROLLO');
+
+--EJERCICIO5
+--Completa el ejercicio anterior con la fecha de inicio y fin de sus contratos
+SELECT COD_EMP, NOMBRE, APELLIDO1, APELLIDO2, FECHA_FIN, FECHA_INICIO, NOMBRE_DEP
+FROM EMPLEADOS E
+JOIN CONTRATOS C USING (COD_EMP)
+JOIN DEPARTAMENTOS D USING (COD_DEP)
+WHERE COD_EMP IN (SELECT
+                      COD_EMP
+                  FROM CONTRATOS
+                  JOIN DEPARTAMENTOS d USING (COD_DEP)
+                  WHERE UPPER(d.NOMBRE_DEP) = 'VENTAS') AND
+    COD_EMP IN (SELECT
+                      COD_EMP
+                  FROM CONTRATOS
+                  JOIN DEPARTAMENTOS d USING (COD_DEP)
+                  WHERE UPPER(d.NOMBRE_DEP) = 'DESARROLLO');
+
+--EJERCICIO6
+--Selecciona los jefes que no sean responables de departamento
+CREATE VIEW V_JEFES  AS
+SELECT E.NOMBRE, E.APELLIDO1, E.APELLIDO2
+FROM EMPLEADOS E
+CROSS JOIN EMPLEADOS F
+WHERE E.COD_EMP IN (
+    SELECT F.COD_JEFE
+    FROM EMPLEADOS
+    )
+GROUP BY E.NOMBRE, E.APELLIDO1, E.APELLIDO2;
+
+CREATE VIEW V_RESP_DEP AS
+SELECT E.NOMBRE, E.APELLIDO1, E.APELLIDO2
+FROM EMPLEADOS E
+WHERE E.COD_EMP IN (
+    SELECT D.COD_RESP
+    FROM DEPARTAMENTOS D
+    )
+GROUP BY E.NOMBRE, E.APELLIDO1, E.APELLIDO2;
+
+SELECT NOMBRE, APELLIDO1, APELLIDO2
+FROM V_JEFES
+MINUS
+SELECT NOMBRE, APELLIDO1, APELLIDO2
+FROM V_RESP_DEP;
+
+--EJERCICIO7
+--Sube un 10% el salario de las personas que traban en un departamento en la C/ Roma 17 y
+-- tengan contratos de 2023. Luego anulala
+CREATE OR REPLACE VIEW V_SUBIDA_10PORCIENTO AS
+SELECT F.COD_PUESTO, F.COD_EMP, F.FECHA_INICIO, SALARIO
+FROM CONTRATOS F
+WHERE SUBSTR(TO_CHAR(FECHA_INICIO),-2)=23
+AND
+COD_DEP IN (
+    SELECT COD_DEP
+    FROM DEPARTAMENTOS
+    JOIN LOCALIZACIONES USING (COD_LOC)
+    WHERE DIRECCION='C/ Roma 17'
+        )
+ORDER BY COD_PUESTO;
+
+UPDATE CONTRATOS SET SALARIO = ((SALARIO*0.1)+SALARIO)
+WHERE EXISTS(
+    SELECT COD_PUESTO, COD_EMP, FECHA_INICIO
+    FROM V_SUBIDA_10PORCIENTO
+          );
+ROLLBACK;
