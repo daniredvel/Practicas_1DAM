@@ -1,0 +1,24 @@
+CREATE USER GestorArticulos IDENTIFIED  BY 'A12345a';
+
+GRANT ALL ON Usuarios.* TO GestorArticulos;
+
+CREATE DATABASE ARTICULOS;
+
+USE ARTICULOS;
+
+CREATE TABLE CATEGORIAS(
+    id_categoria INT,
+    nombre VARCHAR(100) NOT NULL,
+    PRIMARY KEY categorias_pk (id_categoria),
+    CONSTRAINT categorias_uk UNIQUE (nombre)
+);
+
+CREATE TABLE ARTICULOS(
+    clave CHAR(4),
+    nombre VARCHAR(100),
+    precio INT NOT NULL,
+    id_categoria INT NOT NULL,
+    CONSTRAINT articulos_pk PRIMARY KEY (clave),
+    FOREIGN KEY articulos_fk (id_categoria) REFERENCES CATEGORIAS(id_categoria)
+);
+

@@ -1,0 +1,23 @@
+Obtener red
+
+IP		Bits de Red
+192.168.1.9 	24
+
+Pasar IP a binario
+
+11000000.10101000.00000001.00001001
+Como los bits son 24, desde el número 24 en adelante cambia a cero
+11000000.10101000.00000001.00000000
+Y despues pasado a decimal
+197.168.0.0
+
+
+Obtener Host
+IP		Bits de Red
+192.168.1.9 	24
+
+Pasar IP a binario
+
+11000000.10101000.00000001.00001001
+Y obtener Host convierte a ceros la parte contraria de obtener red
+00000000.00000000.00000000.00001001
